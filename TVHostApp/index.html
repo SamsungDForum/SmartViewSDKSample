@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>MultiScreen_Simple_Tizen</title>
+        <script type="text/javascript" src="msf-2.0.21.min.js"></script>
+        <link type="text/css" rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <h1>MultiScreen 2.0 demo application</h1>
+        <div class="left">
+            <h2>Communication panel</h2>
+            <fieldset>
+                <legend>Logs: </legend>
+                <div class="logs" id="logs"></div>
+            </fieldset>
+            <fieldset>
+                <legend>Received messages: </legend>
+                <div class="logs" id="messages"></div>
+            </fieldset>
+        </div>
+        <div class="right">
+            <h2>Info</h2>
+            <p>This application presents an example of simple information exchange between TV and an external device, such as a smartphone, tablet, computer or anything that can browse the Web.</p>
+
+            <p>The application uses websockets to communicate with the client application. If websockets are disabled in your local network the application will not work.</p>
+
+            <h2>Send a message</h2>
+            <fieldset id="imeinput"><legend>Broadcast</legend><p>Press ENTER key on your remote to enter text below.</p><label for="message">Enter your message here:</label> <input type="text" id="message"></fieldset>
+        </div>
+        <script type="text/javascript" src="main.js"></script>
+    </body>
+</html>

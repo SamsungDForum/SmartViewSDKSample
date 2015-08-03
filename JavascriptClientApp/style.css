@@ -1,0 +1,45 @@
+@CHARSET "UTF-8";
+
+body {
+    font-size: 1.5em;
+    padding: 0;
+    margin: 0;
+    min-width: 920px;
+    background-color: #222222;
+    background-image: url(tile.png);
+    color: silver;
+    text-shadow: #000 3px 3px 3px;
+    font-family: 'Open Sans', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: sans-serif;
+    text-align: center;
+    padding: 10px;
+    color: lightgray;
+    background: rgba(0, 0, 0, 0.2);
+    margin: 0;
+}
+
+.left, .right {
+    width: 50%;
+    float: left;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.left {
+    width: 60%;
+}
+
+.right {
+    width: 40%;
+}
+
+.logs {
+    font-family: monospace;
+}
+
+fieldset {
+    margin-top: 10px;
+}

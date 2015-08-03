@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns:tizen="http://tizen.org/ns/widgets"
+        xmlns="http://www.w3.org/ns/widgets"
+        id="http://yourdomain/MultiScreen"
+        version="1.1.0"
+        viewmodes="maximized">
+    <access origin="*" subdomains="true"/>
+    <tizen:application id="demoapp013.MultiScreen"
+                       package="demoapp013"
+                       required_version="2.3"/>
+    <content src="index.html"/>
+    <feature name="http://tizen.org/feature/screen.size.all"/>
+    <icon src="icon.png"/>
+    <name>MultiScreen</name>
+    <runTitle>MultiScreen</runTitle>
+    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+    <tizen:profile name="tv"/>
+    <tizen:setting screen-orientation="auto-rotation" background-support="enable" encryption="disable" hwkey-event="enable"/>
+</widget>

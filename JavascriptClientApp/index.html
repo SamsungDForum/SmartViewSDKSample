@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <script type="text/javascript" src="msf-2.0.21.min.js"></script>
+        <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+        <style type="text/css">
+            @CHARSET "UTF-8";
+            body { font-size: 1.5em; padding: 0; margin: 0; min-width: 920px; background-color: #222222; background-image: url(tile.png); color: silver; text-shadow: #000 3px 3px 3px; font-family: 'Open Sans', sans-serif; }
+            h1, h2, h3, h4, h5, h6 {font-family: sans-serif;text-align: center;padding: 10px;color: lightgray;background: rgba(0, 0, 0, 0.2);margin: 0;}
+            .left, .right {width: 50%;float: left;padding: 10px;box-sizing: border-box;}
+            .left {width: 60%;}
+            .right {width: 40%;}
+            .logs {font-family: monospace;}
+            fieldset {margin-top: 10px;}
+            fieldset label { width: 300px; display: inline-block; text-align: right; }
+            input { font-family: inherit; }
+            input[type="text"] { border: 1px solid #555; padding: 2px 5px; }
+            #manual_connection { display: none }
+            #configureTV { display: none }
+            a, a:link {text-decoration: none;color:white}
+            a:visited {color: #969696}
+        </style>
+        <title>MultiScreenSimple</title>
+    </head>
+
+    <body>
+        <h1>MultiScreen 2.0 client application</h1>
+        <div id="test" class="left">
+            <h2>Operations</h2>
+            <fieldset id="connection">
+                <legend>Connect</legend>
+                <label for="deviceName">Client name:</label>
+                <input type="text" id="deviceName"> <br>
+                <div id="automatic_connection">
+                    <label for="deviceName">Select device:</label>
+                    <select id="devicesSelect"><option value="">searching for devices...</option></select>
+                </div>
+                <div id="manual_connection">
+                    <label for="tvip">Enter TV IP:</label>
+                    <input type="text" id="tvip">
+                </div>
+                <label for="connect">Run:</label> <input type="button" id="connect" value="Connect!">
+            </fieldset>
+
+            <fieldset id="communication">
+                <legend>Communicate</legend>
+                <label for="message">Send a message:</label>
+                <input type="text" id="message"> <br>
+                <label for="send">Ready? </label><input type="button" id="send" value="Send!">
+            </fieldset>
+            <fieldset>
+                <legend>Logs:</legend>
+                <div id="logs"></div>
+            </fieldset>
+        </div>
+        <div class="right">
+            <h2>Info</h2>
+            <p>This is the client app for MultiScreen 2.0 demo app for Tizen TV. Use it to connect and communicate with the application in your TV.</p>
+            <p>Please remember that in order for all this to work, you need to properly configure your TV. <span id="promptDeviceSelect">Choose the TV from dropdown on the left.</span></p>
+            <p id="configureTV">Please open <span id="confLink">this link</span> in a new tab or window and tick the "Allow All Content" checkbox at the bottom of the page.</p>
+        </div>
+        <script type="text/javascript">
+            var $logs = $("#logs"),
+                $message = $("#message"),
+                $select = $("#devicesSelect"),
+                $tvip = $('#tvip'),
+                $confTV = $('#configureTV'),
+                $promptTV = $('#promptDeviceSelect'),
+                $confLink = $("#confLink"),
+                chanName = "com.samsung.multiscreen.MultiScreenSimple",
+                appName = "demoapp013.MultiScreen",
+                ownName = "Teh Browser",
+                devices = {},
+                app = null,
+                connected = false;
+
+            function Log(msg) {
+                $logs.append("<div>" + msg + "</div>");
+            }
+
+            function findLocalDevices(){
+                msf.search(function(err, services){
+                    if (err || !services) {
+                        return;
+                    }
+                    services.forEach(function(service){
+                        devices[service.id] = service;
+                    });
+                    refreshDeviceSelect();
+                });
+            }
+
+            function refreshDeviceSelect(){
+                var k = null, dev = null, str = '';
+                for (k in devices) {
+                    dev = devices[k];
+                    str += '<option value="' + dev.id + '">' + dev.name + '</' + 'option>';
+                }
+                if (str) {
+                    $select.empty().append('<option value="">choose a device</option>' + str);
+                } else {
+                    $select.empty().append('<option value="">no devices found</option>');
+                    if (!$("#manual_connection:visible").length && confirm("Would you like to enter TV ip manually?")) {
+                        $("#automatic_connection").hide();
+                        $("#manual_connection").show('slow');
+                    }
+                }
+            }
+
+            $select.change(function(){
+                var href = devices[this.value].uri.slice(0, -7);
+                $promptTV.hide();
+                $confTV.show();
+                $confLink.html('<a href="' + href + '">this link</a>')
+            });
+
+            function getDevice(){
+                var did = $select.val(), device = null;
+                if (did && devices[did]) {
+                    init(devices[did]);
+                } else if ($tvip.val()) {
+                    msf.remote('http://' + $tvip.val() + ':8001/api/v2/', function (error, device) {
+                        if (error) {
+                            Log("Error occurred while connecting: " + error.message);
+                        } else {
+                            init(device);
+                        }
+                    });
+                } else {
+                    Log("Please choose device from list (if available).");
+                }
+            }
+
+            function init(device) {
+                Log("Connected to device: " + device.name);
+                window.tv = device;
+                app = device.application(appName, chanName);
+                app.on("say", channelOnMessage);           // this call could be chained with subsequent calls
+                app.on("connect", channelOnConnect);       // but the API is not properly implemented at the moment,
+                app.on("disconnect", channelOnDisconnect); // because .on returns undefined instead of EventEmitter instance.
+                Log("Connecting to application...");
+                app.connect({name:ownName}, function(err, client){
+                    if (err && err.code == "404") {
+                        Log("Error connecting to application.");
+                        if (confirm("Would you like to install the application in your TV?")) {
+                            app.install(function(err){
+                                if (err) {
+                                    Log("Error installing application: " + err.message);
+                                } else {
+                                    Log("Please follow installation steps on your TV.");
+                                }
+                            });
+                        }
+                    } else if (err) {
+                        Log("An error occurred: " + err.message);
+                        if (confirm('Would you like to try to connect to channel ' + chanName + '?\nPlease remember, you need to launch the application manually.')) {
+                            initChannel(device, function(chan){
+                                app = chan;
+                                if (!connected) {
+                                    channelOnConnect();
+                                }
+                            });
+                        }
+                    } else {
+                        Log("Client connected.");
+                    }
+                });
+            }
+
+            function initChannel(device, callback) {
+                //var chan = device.channel(chanName);
+                chan = device.channel(chanName);
+                chan.on("say", channelOnMessage);           // this call could be chained with subsequent calls
+                chan.on("connect", channelOnConnect);       // but the API is not properly implemented at the moment,
+                chan.on("disconnect", channelOnDisconnect); // because .on returns undefined instead of EventEmitter instance.
+                chan.connect({name:ownName}, function(error, client){
+                    if (error) {
+                        Log("Another error occurred: " + error.message);
+                        return;
+                    }
+                    Log("Successfully connected to channel.");
+                    callback(chan);
+                });
+            }
+
+            function channelOnMessage (msg, client) {
+                Log("Message from " + client.attributes.name + (client.isHost ? " (the host)" : "") +": <strong>" + msg + "</" + "strong>");
+            }
+
+            function channelOnConnect() {
+                connected = true;
+                $("#connection").find("input,select").not("#connect").attr('disabled', 'disabled');
+                $("#communication").find("input,select").removeAttr('disabled');
+                $("#connect").val("Disconnect").off('click', uiConnect).on('click', uiDisconnect);
+            }
+
+            function channelOnDisconnect() {
+                connected = false;
+                $("#communication").find("input,select").attr('disabled', 'disabled');
+                $("#connection").find("input,select").removeAttr('disabled');
+                findLocalDevices();
+                $("#connect").val("Connect").off('click', uiDisconnect).on('click', uiConnect);
+            }
+
+            function uiConnect(e) {
+                console.info('uiConnect called');
+                chanName = $("#chanName").val() || chanName;
+                ownName = $("#deviceName").val() || ownName;
+                getDevice();
+            }
+
+            function uiDisconnect(e) {
+                console.info('uiDisconnect called');
+                // if this is the last client, kill the app in the TV.
+                app.disconnect(true, function(err){
+                    if (err) {
+                        Log("Error disconnecting: " + err.message);
+                    } else {
+                        Log("You are now disconnected.");
+                    }
+                });
+            }
+
+            $("#send").click(function(e){
+                app.publish("say", $message.val());
+                $message.val('');
+            });
+
+            // initial setup
+            $("#deviceName").val(ownName);
+            channelOnDisconnect();
+        </script>
+    </body>
+</html>
