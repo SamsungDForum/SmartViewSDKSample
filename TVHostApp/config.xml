@@ -11,8 +11,7 @@
     <content src="index.html"/>
     <feature name="http://tizen.org/feature/screen.size.all"/>
     <icon src="icon.png"/>
-    <name>MultiScreen</name>
-    <runTitle>MultiScreen</runTitle>
+    <name>SmartViewSDKSample</name>
     <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
     <tizen:profile name="tv"/>
     <tizen:setting screen-orientation="auto-rotation" background-support="enable" encryption="disable" hwkey-event="enable"/>
